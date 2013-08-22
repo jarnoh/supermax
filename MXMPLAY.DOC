@@ -1,0 +1,348 @@
+                                     ‹‹
+                     ‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹ €€ ‹‹‹ ‹‹ ‹‹‹‹‹‹‹‹
+                        ‹‹‹‹‹ ‹‹  ‹‹ €€‹‹‹  ‹‹  ‹‹‹‹‹ tm
+                       €€     €€  €€ €€  €€ €€ €€
+                       €€     €€  €€ €€  €€ €€ €€
+                        ﬂﬂﬂﬂﬂ  ﬂﬂﬂﬂﬂ ﬂﬂﬂﬂﬂ  ﬂﬂ  ﬂﬂﬂﬂﬂ
+                     ﬂﬂﬂﬂ tiny gus xm player  v1.2 ﬂﬂﬂﬂ
+
+
+
+    Legal disclaimer:
+==============================================================================
+
+  You may copy this package without restrictions as long as no
+  money is charged for copying and it is passed on unmodified with
+  all its files:
+    MXMPLAY.ASM           (the player source)
+    MXMPLAY.OBJ           (the player object)
+    MXMPLAY.H             (include file for c/c++)
+    MXMPLAY.DOC           (this file)
+    FILE_ID.DIZ           (fileid)
+    XM2MXM.CPP            (the conversion source)
+    XM2MXM.EXE            (the conversion program)
+    MXMPLAY.EXE           (compiled C++ example, plays .MXM files)
+    CPPEXAM.CPP           (example for Watcom C++ 10.0)
+    ASMEXAM.ASM           (example for Assembler)
+    MAKEFILE.             (makefile for wmake)
+
+  The package is delivered as is. The author does not guarantee to
+  make further versions or bugfixes. The author cannot be made liable for
+  damage or data loss this piece of code causes, use it at your own risk.
+
+  You may use MXMPLAY in your productions if:
+    -you credit me for the player while runtime or in an info file.
+    -no money is charged for your production.
+
+  You may modify the source for your productions.
+
+
+
+
+    Introduction
+==============================================================================
+
+  This is a MOD and XM player package for the Gravis UltraSound in flat mode.
+  It was optimized for size not for speed. The size is about 5.3k or 3.6k
+  if you pack it with PMWLITE. It was designed for the compo version of
+  64k intros, especially for the Party 5 held in the end of December'95
+  in Fredericia/Denmark. It supports nearly all XM effects and features.
+  It supports the GUS and no device. It supports at least the DOS4GW
+  dos-extender by Rational Systems and PMODE/W 1.20 by Charles Sheffold
+  and Thomas Pytel. It supplies timer and music syncronisation functions
+  for your production. You can also play S3Ms, but the player will only
+  play what FastTracker 2 by Triton makes of it.
+  If you find any incompatibilities with FT2 please tell me.
+
+
+
+    Revision history:
+==============================================================================
+
+  1.2: 30.1.96
+    -source included
+    -sample offset corrected
+    -volume/global volume/panning slide corrected
+    -starting order adjustable
+
+  1.1: 21.12.95
+    -automatic gus detect, xmpInit changed
+    -global variable "__psp" needed for detect
+    -names have changed, underscores now after function names
+    -delta sample values for better compression
+    -sync now works :), thanks go to the one who told me...
+
+  1.0:  4.12.95
+    -first release
+
+
+
+
+    The conversion program:
+==============================================================================
+
+  XM2MXM [options] source [dest]
+
+  This program converts an XM to the internal format called MXM.
+  You might ask why another format, but this format shall not be used
+  for music interchange, it is just very easy to read and made the code
+  about 1k smaller.
+  If you want to play MODs or S3Ms you have to convert them to XM first.
+
+  options:
+    -p0:   XM-panning (instruments) (default)
+    -p1:  MOD-panning (LRRLLRRL)
+    -p2:  MOD-panning (less extreme)
+    -p3:  S3M-panning (LRLRLRLR)
+    -p4:  S3M-panning (less extreme)
+    -p5:    0-panning (MMMMMMMM)
+
+  if you want to play a MOD use -p1, -p2 to use correct panning.
+  A converted S3M would need -p3/4 if it uses standard panning, otherwise
+  you'd have to change the panning values in the header of the mxm.
+  (use -p1 and look for 00FFFF0000FFFF00...)
+
+
+
+
+    The MXM Format:
+==============================================================================
+
+  The MXM Format was designed to be easy to read, small, for use on a GUS
+  only, and to support all of FastTracker 2's featues.
+  It uses S3M like pattern packing, so you can increase the number of
+  channels without a change in size (of course they would have to stay
+  clear). The pattern packing of XM would increase the size. The MXM format
+  uses NO SAMPLE PACKING, though it can use "delta values". If you want to
+  pack the samples, you can do so, as long as the song is passed to the
+  xmpInit routine unmodified. 3 dwords in the header tell you where to
+  find the samples and how many there are:
+    offset 1Ch: offset of the samples
+    offset 20h: number of 8 bit samples
+    offset 24h: number of 16 bit samples
+
+  You will find more detailed information on the format in the source code.
+
+
+
+
+    Notes on the implementation of the XM format:
+==============================================================================
+
+  E3x  (glissando control)       not implemented
+  E5x  (finetune)                not implemented
+  EFx  (funk repeat???)          set sync value
+  Lxx  (set envelope position)   not implemented
+  Txx  (tremor)                  not implemented
+  Sxx  -                         set sync value
+
+  all other commands and features should be supported correctly.
+
+
+
+    MXMPLAY.ASM and its functions:
+==============================================================================
+
+  The object file was compiled with TASM 3.1 using .386 and .model flat,c
+  The segments and groups are the ones needed for Watcom C++ 10.0.
+
+  -segments:
+    -the code segment is _TEXT (dword public use32 class 'CODE')
+    -the data segment is _DATA (dword public use32 class 'DATA')
+    -the uninitialized data segment is _BSS (dword public use32 class 'BSS')
+    -DGROUP consists of _DATA and _BSS
+  -all function names end with an underscore and are case sensitive
+  -parameters are passed in registers
+  -there must be a global variable "__psp" that holds the selector of the
+   program segment prefix
+  -on entry to all functions the following must be true:
+    -CS must point to _TEXT
+    -DS must point to _DATA
+    -ES must point to _DATA
+    -SS must point to _DATA
+    -the direction flag must be clear
+
+  C(++) coders must include mxmplay.h for correct access.
+  Assembler coders must make their own include files depending on their code,
+  assembly equivalents for the C(++) stuff are in brackets.
+
+  The object consists of the following functions:
+
+    xmpInit
+    xmpPlay
+    xmpStop
+    xmpSetVolume
+    xmpGetSync
+    xmpGetPos
+    xmpGetTimer
+
+
+
+xmpInit: (xmpInit_)
+------------------------------------------------------------------------------
+  int xmpInit(void *mxmmem, unsigned long pspsel, unsigned long maxtimerrate);
+
+  Inits the soundsystem and prepares the module for playing.
+
+  mxmmem: (esi)
+    Pointer to the module. You must load the complete module from disk
+    and pass the address to this function.
+
+  pspseg: (eax)
+    Selector of the Program Segement Prefix. C(++) coders should use _psp.
+    You can also specify the port directly by setting the MSb.
+    (eg: 0x80000220)
+
+  maxtimerrate: (ecx)
+    The maximum number of clock ticks (1193046 ticks/sec) between two
+    irq 0 calls. Never set this to more than 65536. Set this to 65536 if
+    you want to have a periodically called routine. Install your interrupt
+    handler after starting to play and deinstall before stopping to play.
+    The interval between two subsequent calls to the interrupt is no longer
+    than this value, but will vary while runtime.
+
+  returnvalue: (eax)
+    0: failed
+    1: ok
+
+  modifies: eax ebx ecx edx esi edi
+
+
+
+xmpPlay: (xmpPlay_)
+------------------------------------------------------------------------------
+  void xmpPlay(unsigned int startord);
+
+  Enables the timer services and starts to play the module.
+
+  startord: (eax)
+    start playing at this order
+
+  modifies: eax ebx ecx edx esi edi
+
+
+
+xmpStop: (xmpStop_)
+------------------------------------------------------------------------------
+  void xmpStop();
+
+  Stop the sound output and disables the timer services.
+
+  modifies: eax ebx ecx edx esi edi
+
+
+
+xmpSetVolume: (xmpSetVolume_)
+------------------------------------------------------------------------------
+  void xmpSetVolume(unsigned char vol);
+
+  Set the relative volume.
+
+  vol: (al)
+    range 0 to 64.
+
+  modifies: nothing
+
+
+
+xmpGetSync: (xmpGetSync_)
+------------------------------------------------------------------------------
+  unsigned char xmpGetSync();
+
+  Returns the currently set syncvalue. You set the syncvalue with the command
+    EFx or Sxx. I do not really know how you usually do syncronisation, but
+    this might help. :)
+
+  returnvalue: (al)
+    the syncvalue
+
+  modifies: al
+
+
+
+xmpGetPos: (xmpGetPos_)
+------------------------------------------------------------------------------
+  unsigned short xmpGetPos();
+
+  Returns the current position in the song.
+
+  returnvalue: (ax)
+    highbyte: current order
+     lowbyte: current row
+
+  modifies: ax
+
+
+
+xmpGetTimer: (xmpGetTimer_)
+------------------------------------------------------------------------------
+  long xmpGetTimer();
+
+  Returns the timer value. This values starts at the first tick of the
+  module and counts up all the time at a rate of 1193046Hz.
+
+  returns: (eax)
+    the number of timer ticks since the first tick of the module.
+
+  modifies: eax
+
+
+
+
+    contact information:
+==============================================================================
+
+snailmail:
+
+  Niklas Beisert / pascal / cubic team
+  Oberstrasse 84
+  20149 Hamburg
+  Germany
+
+    Fido: Niklas Beisert@2:2437/301.44
+Internet: pascal@nightmare.harz.de
+          bertolt.meyer@isys.net
+
+
+
+    greetings:
+==============================================================================
+  DOJ
+  Tran and Daredevil for PMODE/W
+  $eeN
+  pÅrsch.pÅblique_nmi
+  Legend Design
+  Valhalla
+  Vacuum
+  Velvet Dev.
+  Iguana
+  The Coexsistence
+  ...
+
+
+== FILE_ID.DIZ ===============================================================
+˛ cubic tiny gus ‹‹ xm player v1.2 ˛
+ ‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹ €€ ‹‹‹ ‹‹ ‹‹‹‹‹‹‹‹
+    ‹‹‹‹‹ ‹‹  ‹‹ €€‹‹‹  ‹‹  ‹‹‹‹‹ tm
+   €€     €€  €€ €€  €€ €€ €€
+   €€     €€  €€ €€  €€ €€ €€
+    ﬂﬂﬂﬂﬂ  ﬂﬂﬂﬂﬂ ﬂﬂﬂﬂﬂ  ﬂﬂ  ﬂﬂﬂﬂﬂ
+ ﬂﬂﬂﬂ tiny gus xm player  v1.2 ﬂﬂﬂﬂ
+€                                  €
+€ new features:                    €
+€ -source included                 €
+€ -startpos adjustable             €
+€ -bugfixes                        €
+€                                  €
+€ -flat mode, no external functs   €
+€   needed. tested ok with dos4gw, €
+€   pmode/w 1.2 and watcom c++ 10. €
+€ -supports gus & quiet (clean)    €
+€ -supports xm & mod               €
+€ -size: 5.3k, pmwlite size: 3.6k  €
+€ -all xm features supported       €
+€ -plays 99% of all effects        €
+€ -supplies timer, sync and volume €
+€   functions. autodetects gus.    €
+ﬂ                                  ﬂ
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ

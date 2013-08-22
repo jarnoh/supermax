@@ -1,0 +1,42 @@
+ASM       = tasm
+ASMPARAM  = /m
+CC        = wpp386
+CCPARAM   = -7 -oneaxtrlmp -fp5 -5r
+LINK      = dlink
+LINKPARAM = -S
+
+
+all:    haque.exe # supermax.exe
+
+supermax.exe: supermax.obj haque.exe
+        tlink /3 supermax
+        epatch supermax.exe haque.exe _exe_here_
+        pp p p supermax.exe
+        move supermax.rnc supermax.exe
+
+supermax.obj: supermax.asm
+        $(ASM) $(ASMPARAM) supermax
+
+haque.exe: haque.obj vesa.obj mxmplay.obj true.obj sm.raw logo.raw whip2.mxm
+        $(LINK) haque mxmplay debug vesa true, haque $(LINKPARAM)
+        epatch haque.exe sm.raw smaxlogo_1
+        epatch haque.exe logo.raw complexlogo
+        epatch haque.exe kredo.raw huuhaatext
+        epatch haque.exe whip2.mxm modi_poppi
+        epatch haque.exe gra_lc.bin flare1lc
+        epatch haque.exe gra_rc.bin flare1rc
+        epatch haque.exe gra_lc2.bin flare2lc
+        epatch haque.exe gra_rc2.bin flare2rc
+        epatch haque.exe gra_lc3.bin flare3lc
+
+haque.obj: haque.asm rock.asm filu.asm random.asm skripti.asm tuna.asm
+        $(ASM) $(ASMPARAM) haque
+vesa.obj: vesa.asm
+        $(ASM) $(ASMPARAM) vesa
+mxmplay.obj: mxmplay.asm
+        $(ASM) $(ASMPARAM) mxmplay
+true.obj: true.cxx
+        $(CC) $(CCPARAM) true.cxx
+tab.obj: tab.cxx
+        $(CC) $(CCPARAM) tab.cxx
+
